@@ -316,7 +316,7 @@ function clearTransactionLogs() {
   logsBox.setScroll(0);
   updateLogs();
   safeRender();
-  addLog("Transaction logs telah dihapus.", "system", currentNetwork);
+  addLog("The transaction logs have been cleared.", "system", currentNetwork);
 }
 
 async function fetchMyUserId(discordToken) {
@@ -500,7 +500,7 @@ async function swapUsdcToR2usd(amountUsdc, nonce, wallet, provider, config) {
   const routerContractAddress = config.ROUTER_USDC_TO_R2USD;
 
   const isPaused = await checkContractPaused(routerContractAddress, provider, network);
-  if (isPaused) throw new Error("Kontrak dalam status paused, swap tidak dapat dilakukan");
+  if (isPaused) throw new Error("The contract is in a paused state, swap cannot be performed.");
 
   const usdcContract = new ethers.Contract(config.USDC_ADDRESS, ERC20ABI, provider);
   let balance = await usdcContract.balanceOf(wallet.address);
@@ -772,7 +772,7 @@ async function autoSwapR2usdUsdc(network, wallet) {
 
   if (currentDirection) {
     amount = getRandomNumber(ranges["USDC"].min, ranges["USDC"].max).toFixed(6);
-    addLog(`Mencoba swap: ${amount} USDC ke R2USD untuk wallet ${getShortAddress(wallet.address)}`, "swap", network);
+    addLog(`Trying swap: ${amount} USDC ke R2USD For wallet ${getShortAddress(wallet.address)}`, "swap", network);
     txPromise = addTransactionToQueue(
       (nonce, _, provider, config) => swapUsdcToR2usd(amount, nonce, wallet, provider, config),
       `Swap ${amount} USDC to R2USD`,
@@ -781,7 +781,7 @@ async function autoSwapR2usdUsdc(network, wallet) {
     );
   } else {
     amount = getRandomNumber(ranges["R2USD"].min, ranges["R2USD"].max).toFixed(6);
-    addLog(`Mencoba swap: ${amount} R2USD ke USDC untuk wallet ${getShortAddress(wallet.address)}`, "swap", network);
+    addLog(`Trying swap: ${amount} R2USD ke USDC For wallet ${getShortAddress(wallet.address)}`, "swap", network);
     txPromise = addTransactionToQueue(
       (nonce, _, provider, config) => swapR2usdToUsdc(amount, nonce, wallet, provider, config),
       `Swap ${amount} R2USD to USDC`,
@@ -805,7 +805,7 @@ async function autoSwapR2Usdc(network, wallet) {
 
   if (currentDirection) {
     amount = getRandomNumber(ranges["USDC"].min, ranges["USDC"].max).toFixed(6);
-    addLog(`Mencoba swap: ${amount} USDC ke R2 untuk wallet ${getShortAddress(wallet.address)}`, "swap", network);
+    addLog(`Trying swap: ${amount} USDC ke R2 For wallet ${getShortAddress(wallet.address)}`, "swap", network);
     txPromise = addTransactionToQueue(
       (nonce, _, provider, config) => swapUsdcToR2(amount, nonce, wallet, provider, config),
       `Swap ${amount} USDC to R2`,
@@ -814,7 +814,7 @@ async function autoSwapR2Usdc(network, wallet) {
     );
   } else {
     amount = getRandomNumber(ranges["R2"].min, ranges["R2"].max).toFixed(6);
-    addLog(`Mencoba swap: ${amount} R2 ke USDC untuk wallet ${getShortAddress(wallet.address)}`, "swap", network);
+    addLog(`Trying swap: ${amount} R2 ke USDC For wallet ${getShortAddress(wallet.address)}`, "swap", network);
     txPromise = addTransactionToQueue(
       (nonce, _, provider, config) => swapR2ToUsdc(amount, nonce, wallet, provider, config),
       `Swap ${amount} R2 to USDC`,
@@ -838,7 +838,7 @@ async function autoSwapR2R2usd(network, wallet) {
 
   if (currentDirection) {
     amount = getRandomNumber(ranges["R2"].min, ranges["R2"].max).toFixed(6);
-    addLog(`Mencoba swap: ${amount} R2 ke R2USD untuk wallet ${getShortAddress(wallet.address)}`, "swap", network);
+    addLog(`Trying swap: ${amount} R2 ke R2USD For wallet ${getShortAddress(wallet.address)}`, "swap", network);
     txPromise = addTransactionToQueue(
       (nonce, _, provider, config) => swapR2ToR2usd(amount, nonce, wallet, provider, config),
       `Swap ${amount} R2 to R2USD`,
@@ -847,7 +847,7 @@ async function autoSwapR2R2usd(network, wallet) {
     );
   } else {
     amount = getRandomNumber(ranges["R2USD"].min, ranges["R2USD"].max).toFixed(6);
-    addLog(`Mencoba swap: ${amount} R2USD ke R2 untuk wallet ${getShortAddress(wallet.address)}`, "swap", network);
+    addLog(`Trying swap: ${amount} R2USD ke R2 For wallet ${getShortAddress(wallet.address)}`, "swap", network);
     txPromise = addTransactionToQueue(
       (nonce, _, provider, config) => swapR2usdToR2(amount, nonce, wallet, provider, config),
       `Swap ${amount} R2USD to R2`,
@@ -909,8 +909,8 @@ async function autoAddLpR2usdSr2usd(amountR2usd, nonce, wallet, provider, config
   balanceR2usd = BigInt(balanceR2usd.toString());
   balanceSr2usd = BigInt(balanceSr2usd.toString());
 
-  if (balanceR2usd < amount) throw new Error(`Saldo R2USD tidak cukup: ${ethers.formatUnits(balanceR2usd, 6)} R2USD`);
-  if (balanceSr2usd < amountSr2usdWei) throw new Error(`Saldo sR2USD tidak cukup: ${ethers.formatUnits(balanceSr2usd, 6)} sR2USD`);
+  if (balanceR2usd < amount) throw new Error(`Insufficient R2USD balance: ${ethers.formatUnits(balanceR2usd, 6)} R2USD`);
+  if (balanceSr2usd < amountSr2usdWei) throw new Error(`Insufficient sR2USD balance: ${ethers.formatUnits(balanceSr2usd, 6)} sR2USD`);
 
   await ensureApproval(config.R2USD_ADDRESS, lpContractAddress, amount, wallet, network);
   await ensureApproval(config.sR2USD_ADDRESS, lpContractAddress, amountSr2usdWei, wallet, network);
@@ -937,8 +937,8 @@ async function autoAddLpUsdcR2usd(amountUsdc, nonce, wallet, provider, config) {
   balanceUsdc = BigInt(balanceUsdc.toString());
   balanceR2usd = BigInt(balanceR2usd.toString());
 
-  if (balanceUsdc < amount) throw new Error(`Saldo USDC tidak cukup: ${ethers.formatUnits(balanceUsdc, 6)} USDC`);
-  if (balanceR2usd < amountR2usdWei) throw new Error(`Saldo R2USD tidak cukup: ${ethers.formatUnits(balanceR2usd, 6)} R2USD`);
+  if (balanceUsdc < amount) throw new Error(`Insufficient USDC balance: ${ethers.formatUnits(balanceUsdc, 6)} USDC`);
+  if (balanceR2usd < amountR2usdWei) throw new Error(`Insufficien R2USD balance: ${ethers.formatUnits(balanceR2usd, 6)} R2USD`);
 
   await ensureApproval(config.USDC_ADDRESS, lpContractAddress, amount, wallet, network);
   await ensureApproval(config.R2USD_ADDRESS, lpContractAddress, amountR2usdWei, wallet, network);
@@ -954,22 +954,22 @@ async function autoAddLpUsdcR2usd(amountUsdc, nonce, wallet, provider, config) {
 async function runAutoAction(actionFunction, actionName, network) {
   promptBox.setFront();
   if (actionName.includes("Stake") || actionName.includes("Add LP")) {
-    promptBox.input(`Masukkan jumlah untuk ${actionName} (atau tekan Enter untuk semua wallet)`, "", async (err, value) => {
+    promptBox.input(`Enter the amount for ${actionName} (or press Enter for all wallets)`, "", async (err, value) => {
       promptBox.hide();
       safeRender();
       if (err) {
-        addLog(`${actionName}: Input dibatalkan.`, "swap", network);
+        addLog(`${actionName}: Input canceled.`, "swap", network);
         return;
       }
       const amount = parseFloat(value);
       if (isNaN(amount) || amount <= 0) {
-        addLog(`${actionName}: Jumlah harus lebih besar dari 0.`, "swap", network);
+        addLog(`${actionName}: The amount must be greater than 0..`, "swap", network);
         return;
       }
 
       for (const wallet of wallets) {
         if (runningActions[network][wallet.address] > 0) {
-          addLog(`${actionName}: Tidak dapat dimulai untuk wallet ${getShortAddress(wallet.address)} karena ada transaksi berjalan di ${network}.`, "warning", network);
+          addLog(`${actionName}: Cannot start for wallet ${getShortAddress(wallet.address)} because there is an ongoing transaction in ${network}.`, "warning", network);
           continue;
         }
         runningActions[network][wallet.address]++;
@@ -1012,9 +1012,9 @@ async function runAutoAction(actionFunction, actionName, network) {
             );
           }
           await updateWalletData(network);
-          addLog(`${actionName}: Selesai untuk ${amount} (Wallet: ${getShortAddress(wallet.address)}).`, "success", network);
+          addLog(`${actionName}: Completed for ${amount} (Wallet: ${getShortAddress(wallet.address)}).`, "success", network);
         } catch (error) {
-          addLog(`${actionName}: Gagal - ${error.message} (Wallet: ${getShortAddress(wallet.address)})`, "error", network);
+          addLog(`${actionName}: Failed - ${error.message} (Wallet: ${getShortAddress(wallet.address)})`, "error", network);
         } finally {
           runningActions[network][wallet.address]--;
           mainMenu.setItems(getMainMenItems());
@@ -1028,22 +1028,22 @@ async function runAutoAction(actionFunction, actionName, network) {
       }
     });
   } else {
-    promptBox.input(`Masukkan jumlah Swap untuk ${actionName} (atau tekan Enter untuk semua wallet)`, "", async (err, value) => {
+    promptBox.input(`Enter the swap amount for ${actionName} (or press Enter for all wallets)`, "", async (err, value) => {
       promptBox.hide();
       safeRender();
       if (err) {
-        addLog(`${actionName}: Input dibatalkan.`, "swap", network);
+        addLog(`${actionName}: Input canceled.`, "swap", network);
         return;
       }
       const loopCount = parseInt(value) || 1;
       if (isNaN(loopCount) || loopCount <= 0) {
-        addLog(`${actionName}: Jumlah harus berupa angka positif.`, "swap", network);
+        addLog(`${actionName}: The amount must be a positive number..`, "swap", network);
         return;
       }
 
       for (const wallet of wallets) {
         if (runningActions[network][wallet.address] > 0) {
-          addLog(`${actionName}: Tidak dapat dimulai untuk wallet ${getShortAddress(wallet.address)} karena ada transaksi berjalan di ${network}.`, "warning", network);
+          addLog(`${actionName}: Cannot start for wallet ${getShortAddress(wallet.address)} because there is an ongoing transaction in ${network}.`, "warning", network);
           continue;
         }
         runningActions[network][wallet.address]++;
@@ -1059,17 +1059,17 @@ async function runAutoAction(actionFunction, actionName, network) {
         try {
           for (let i = 1; i <= loopCount; i++) {
             if (swapCancelled[network][wallet.address]) {
-              addLog(`${actionName}: Dihentikan pada Swap ${i} untuk wallet ${getShortAddress(wallet.address)}.`, "swap", network);
+              addLog(`${actionName}: Stopped at Swap ${i} For wallet ${getShortAddress(wallet.address)}.`, "swap", network);
               break;
             }
-            addLog(`Memulai Swap ke-${i} untuk wallet ${getShortAddress(wallet.address)}`, "swap", network);
+            addLog(`Starting Swap to-${i} For wallet ${getShortAddress(wallet.address)}`, "swap", network);
             const success = await actionFunction(network, wallet);
             if (success) await updateWalletData(network);
             if (i < loopCount) {
               const delayTime = getRandomDelay();
               const minutes = Math.floor(delayTime / 60000);
               const seconds = Math.floor((delayTime % 60000) / 1000);
-              addLog(`Swap ke-${i} selesai untuk wallet ${getShortAddress(wallet.address)}. Menunggu ${minutes} menit ${seconds} detik.`, "swap", network);
+              addLog(`Swap ke-${i} Completed for wallet ${getShortAddress(wallet.address)}. Waiting ${minutes} Minute ${seconds} Second.`, "swap", network);
               await waitWithCancel(delayTime, "swap", network, wallet.address);
             }
           }
@@ -1082,14 +1082,14 @@ async function runAutoAction(actionFunction, actionName, network) {
             sepoliaR2SubMenu.setItems(getSepoliaR2SubMenuItems());
           }
           safeRender();
-          addLog(`${actionName}: Selesai untuk wallet ${getShortAddress(wallet.address)}.`, "swap", network);
+          addLog(`${actionName}: Completed for wallet ${getShortAddress(wallet.address)}.`, "swap", network);
         }
       }
     });
   }
 }
 
-async function addTransactionToQueue(transactionFunction, description = "Transaksi", network, wallet) {
+async function addTransactionToQueue(transactionFunction, description = "Transation", network, wallet) {
   const transactionId = ++transactionIdCounter;
   transactionQueueList.push({
     id: transactionId,
@@ -1098,7 +1098,7 @@ async function addTransactionToQueue(transactionFunction, description = "Transak
     status: "queued",
     wallet: wallet.address,
   });
-  addLog(`Transaksi [${transactionId}] ditambahkan ke antrean: ${description} (Wallet: ${getShortAddress(wallet.address)})`, "system", network);
+  addLog(`Transaksi [${transactionId}] Added to queue: ${description} (Wallet: ${getShortAddress(wallet.address)})`, "system", network);
   updateQueueDisplay();
 
   transactionQueues[wallet.address] = transactionQueues[wallet.address].then(async () => {
@@ -1110,15 +1110,15 @@ async function addTransactionToQueue(transactionFunction, description = "Transak
 
       const tx = await transactionFunction(nonce, wallet, provider, config);
       const txHash = tx.hash;
-      addLog(`Transaksi Dikirim. Hash: ${getShortHash(txHash)} (Wallet: ${getShortAddress(wallet.address)})`, "warning", network);
+      addLog(`Transaction Sent. Hash: ${getShortHash(txHash)} (Wallet: ${getShortAddress(wallet.address)})`, "warning", network);
       const receipt = await tx.wait();
 
       if (receipt.status === 1) {
         updateTransactionStatus(transactionId, "completed");
-        addLog(`Transaksi Selesai. Hash: ${getShortHash(receipt.transactionHash || txHash)} (Wallet: ${getShortAddress(wallet.address)})`, "success", network);
+        addLog(`Transation Completed. Hash: ${getShortHash(receipt.transactionHash || txHash)} (Wallet: ${getShortAddress(wallet.address)})`, "success", network);
       } else {
         updateTransactionStatus(transactionId, "failed");
-        addLog(`Transaksi [${transactionId}] gagal: Transaksi ditolak oleh kontrak (Wallet: ${getShortAddress(wallet.address)}).`, "error", network);
+        addLog(`Transation [${transactionId}] Failed: Transaction rejected by contract (Wallet: ${getShortAddress(wallet.address)}).`, "error", network);
         nextNonces[wallet.address] = null;
       }
       return { receipt, txHash, tx };
@@ -1153,9 +1153,9 @@ async function claimSepoliaFaucetWithDelay({ isDailyClaim = false } = {}) {
 
   claimRunning = false;
   if (isDailyClaim) {
-    addLog("Auto Daily Claim Faucet selesai, menunggu 24 jam.", "swap", "Sepolia");
+    addLog("Auto Daily Claim Faucet Completed, waiting 24 hours.", "swap", "Sepolia");
   } else {
-    addLog("Claim Faucet selesai.", "success", "Sepolia");
+    addLog("Claim Faucet Completed.", "success", "Sepolia");
   }
   claimFaucetSubMenu.setItems(getClaimFaucetSubMenuItems());
   safeRender();
@@ -1163,25 +1163,25 @@ async function claimSepoliaFaucetWithDelay({ isDailyClaim = false } = {}) {
 
 function startAutoDailyClaim() {
   if (dailyClaimInterval) {
-    addLog("Auto Daily Claim Faucet Sepolia sudah berjalan.", "warning");
+    addLog("Auto Daily Claim Faucet Sepolia Already running.", "warning");
     return;
   }
   dailyClaimInterval = setInterval(() => {
     if (!claimRunning) claimSepoliaFaucetWithDelay({ isDailyClaim: true });
   }, 86400000);
   claimSepoliaFaucetWithDelay({ isDailyClaim: true });
-  addLog("Auto Daily Claim Faucet Sepolia dimulai.", "system");
+  addLog("Auto Daily Claim Faucet Sepolia Started.", "system");
 }
 
 function stopAutoDailyClaim() {
   if (dailyClaimInterval) {
     clearInterval(dailyClaimInterval);
     dailyClaimInterval = null;
-    addLog("Auto Daily Claim Faucet Sepolia dihentikan.", "system");
+    addLog("Auto Daily Claim Faucet Sepolia Stopped.", "system");
   }
   if (claimRunning) {
     claimCancelled = true;
-    addLog("Proses claim faucet dihentikan.", "system");
+    addLog("Proses claim faucet Stopped.", "system");
   }
   claimFaucetSubMenu.setItems(getClaimFaucetSubMenuItems());
   safeRender();
@@ -1190,7 +1190,7 @@ function stopAutoDailyClaim() {
 async function claimFaucet(network) {
   try {
     const channelId = NETWORK_CHANNEL_IDS[network];
-    if (!channelId) throw new Error(`Jaringan ${network} tidak didukung.`);
+    if (!channelId) throw new Error(`The ${network} network is not supported.`);
 
     for (let i = 0; i < wallets.length; i++) {
       const wallet = wallets[i];
@@ -1265,7 +1265,7 @@ function removeTransactionFromQueue(id) {
 }
 
 function getTransactionQueueContent() {
-  if (transactionQueueList.length === 0) return "Tidak ada transaksi dalam antrean.";
+  if (transactionQueueList.length === 0) return "No transactions in the queue.";
   return transactionQueueList
     .map((tx) => `ID: ${tx.id} | ${tx.description} | ${tx.status} | ${tx.timestamp} | Wallet: ${getShortAddress(tx.wallet)}`)
     .join("\n");
@@ -1276,7 +1276,7 @@ let queueUpdateInterval = null;
 
 function showTransactionQueueMenu() {
   const container = blessed.box({
-    label: " Antrian Transaksi ",
+    label: " Transaction Queue ",
     top: "10%",
     left: "center",
     width: "80%",
@@ -1300,7 +1300,7 @@ function showTransactionQueueMenu() {
     scrollbar: { ch: " ", inverse: true, style: { bg: "blue" } },
   });
   const exitButton = blessed.button({
-    content: " [Keluar] ",
+    content: " [Exit] ",
     bottom: 0,
     left: "center",
     shrink: true,
@@ -1311,7 +1311,7 @@ function showTransactionQueueMenu() {
     interactive: true,
   });
   exitButton.on("press", () => {
-    addLog("Keluar Dari Menu Antrian Transaksi.", "system", currentNetwork);
+    addLog("Exit From Transaction Queue Menu.", "system", currentNetwork);
     clearInterval(queueUpdateInterval);
     container.destroy();
     queueMenuBox = null;
@@ -1362,8 +1362,8 @@ const headerBox = blessed.box({
   style: { fg: "white", bg: "default" },
 });
 
-figlet.text("NT EXHAUST".toUpperCase(), { font: "ANSI Shadow" }, (err, data) => {
-  if (err) headerBox.setContent("{center}{bold}NT EXHAUST{/bold}{/center}");
+figlet.text("ADB NODE".toUpperCase(), { font: "ANSI Shadow" }, (err, data) => {
+  if (err) headerBox.setContent("{center}{bold}ADB NODE{/bold}{/center}");
   else headerBox.setContent(`{center}{bold}{bright-cyan-fg}${data}{/bright-cyan-fg}{/bold}{/center}`);
   safeRender();
 });
@@ -1430,7 +1430,7 @@ function getMainMenItems() {
     "Sepolia Network",
     "Sepolia R2 Network",
     "Claim Faucet",
-    "Antrian Transaksi",
+    "Transaction Queue",
     "Clear Transaction Logs",
     "Refresh",
     "Exit",
@@ -1585,9 +1585,9 @@ function updateWelcomeBox() {
   const content =
     `{center}{bold}{bright-red-fg}[:: R2 :: AUTO :: BOT ::]{/bright-red-fg}{/bold}{/center}\n\n` +
     `{center}{bold}{bright-yellow-fg}Version :-sn: ${botVersion}{/bright-yellow-fg}{/bold}{/center}\n` +
-    `{center}{bold}{bright-cyan-fg}➥ Join Telegram : t.me/NTExhaust{/bright-cyan-fg}{/bold}{/center}\n` +
-    `{center}{bold}{bright-cyan-fg}➥ Subscribe : Youtube.com/@NTExhaust{/bright-cyan-fg}{/bold}{/center}\n` +
-    `{center}{bold}{grey-fg}Donate : saweria.co/vinsenzo{/grey-fg}{/bold}{/center}\n`;
+    `{center}{bold}{bright-cyan-fg}➥ Join Telegram : t.me/airdropbombnode{/bright-cyan-fg}{/bold}{/center}\n` +
+    `{center}{bold}{bright-cyan-fg}➥ Subscribe : Youtube.com/@airdropbombnode{/bright-cyan-fg}{/bold}{/center}\n` +
+    `{center}{bold}{grey-fg}➥ Subscribe : x.com/@airdropbombnode{/grey-fg}{/bold}{/center}\n`;
   welcomeBox.setContent(content);
   safeRender();
 }
@@ -1645,21 +1645,21 @@ mainMenu.on("select", (item) => {
   const selected = item.getText();
   if (selected === "Select Wallet") {
     promptBox.setFront();
-    promptBox.input(`Masukkan nomor wallet (1-${walletAddresses.length})`, "", (err, value) => {
+    promptBox.input(`Enter wallet number (1-${walletAddresses.length})`, "", (err, value) => {
       promptBox.hide();
       safeRender();
       if (err || !value) {
-        addLog("Select Wallet: Input dibatalkan.", "system", currentNetwork);
+        addLog("Select Wallet: Input canceled.", "system", currentNetwork);
         return;
       }
       const index = parseInt(value) - 1;
       if (isNaN(index) || index < 0 || index >= walletAddresses.length) {
-        addLog("Select Wallet: Nomor wallet tidak valid.", "error", currentNetwork);
+        addLog("Select Wallet: Invalid wallet number.", "error", currentNetwork);
         return;
       }
       currentWalletIndex = index;
             updateWallet();
-      addLog(`Wallet diubah ke ${getShortAddress(walletAddresses[currentWalletIndex])} (Wallet ${currentWalletIndex + 1})`, "system", currentNetwork);
+      addLog(`Wallet changed to ${getShortAddress(walletAddresses[currentWalletIndex])} (Wallet ${currentWalletIndex + 1})`, "system", currentNetwork);
     });
   } else if (selected === "Sepolia Network") {
     currentNetwork = "Sepolia";
@@ -1667,7 +1667,7 @@ mainMenu.on("select", (item) => {
     sepoliaSubMenu.show();
     sepoliaSubMenu.focus();
     updateWallet();
-    addLog("Beralih ke Sepolia Network.", "system", currentNetwork);
+    addLog("Switch to Sepolia Network.", "system", currentNetwork);
     safeRender();
   } else if (selected === "Sepolia R2 Network") {
     currentNetwork = "Sepolia R2";
@@ -1681,9 +1681,9 @@ mainMenu.on("select", (item) => {
     mainMenu.hide();
     claimFaucetSubMenu.show();
     claimFaucetSubMenu.focus();
-    addLog("Beralih ke Menu Claim Faucet.", "system", currentNetwork);
+    addLog("Switch to Claim Faucet Menu.", "system", currentNetwork);
     safeRender();
-  } else if (selected === "Antrian Transaksi") {
+  } else if (selected === "Transaction Queue") {
     queueMenuBox = showTransactionQueueMenu();
   } else if (selected === "Clear Transaction Logs") {
     clearTransactionLogs();
@@ -1691,14 +1691,14 @@ mainMenu.on("select", (item) => {
     walletAddresses.forEach((address) => {
       swapCancelled[currentNetwork][address] = true;
     });
-    addLog("Semua transaksi dihentikan.", "system", currentNetwork);
+    addLog("All transactions stopped.", "system", currentNetwork);
     mainMenu.setItems(getMainMenItems());
     safeRender();
   } else if (selected === "Refresh") {
     updateWalletData(currentNetwork);
-    addLog("Memperbarui data wallet.", "system", currentNetwork);
+    addLog("Updating wallet data.", "system", currentNetwork);
   } else if (selected === "Exit") {
-    addLog("Keluar dari aplikasi.", "system", currentNetwork);
+    addLog("Exit the application.", "system", currentNetwork);
     screen.destroy();
     process.exit(0);
   }
@@ -1723,13 +1723,13 @@ sepoliaSubMenu.on("select", (item) => {
     ]);
     sepoliaManualSwapSubMenu.show();
     sepoliaManualSwapSubMenu.focus();
-    addLog("Beralih ke Menu Manual Swap.", "system", currentNetwork);
+    addLog("Switch to Manual Swap Menu.", "system", currentNetwork);
     safeRender();
   } else if (selected === "Change Random Amount") {
     sepoliaSubMenu.hide();
     sepoliaChangeRandomAmountSubMenu.show();
     sepoliaChangeRandomAmountSubMenu.focus();
-    addLog("Beralih ke Menu Change Random Amount.", "system", currentNetwork);
+    addLog("Switch to Change Random Amount Menu.", "system", currentNetwork);
     safeRender();
   } else if (selected === "Clear Transaction Logs") {
     clearTransactionLogs();
@@ -1737,18 +1737,18 @@ sepoliaSubMenu.on("select", (item) => {
     walletAddresses.forEach((address) => {
       swapCancelled["Sepolia"][address] = true;
     });
-    addLog("Semua transaksi dihentikan di Sepolia.", "system", "Sepolia");
+    addLog("All transactions stopped on Sepolia.", "system", "Sepolia");
     sepoliaSubMenu.setItems(getSepoliaSubMenuItems());
     safeRender();
   } else if (selected === "Back To Main Menu") {
     sepoliaSubMenu.hide();
     mainMenu.show();
     mainMenu.focus();
-    addLog("Kembali ke Main Menu.", "system", currentNetwork);
+    addLog("Return to Main Menu.", "system", currentNetwork);
     safeRender();
   } else if (selected === "Refresh") {
     updateWalletData("Sepolia");
-    addLog("Memperbarui data wallet untuk Sepolia.", "system", "Sepolia");
+    addLog("Updating wallet data for Sepolia.", "system", "Sepolia");
   }
 });
 
@@ -1773,13 +1773,13 @@ sepoliaR2SubMenu.on("select", (item) => {
     ]);
     sepoliaManualSwapSubMenu.show();
     sepoliaManualSwapSubMenu.focus();
-    addLog("Beralih ke Menu Manual Swap.", "system", currentNetwork);
+    addLog("Switch to Manual Swap Menu.", "system", currentNetwork);
     safeRender();
   } else if (selected === "Change Random Amount") {
     sepoliaR2SubMenu.hide();
     sepoliaChangeRandomAmountSubMenu.show();
     sepoliaChangeRandomAmountSubMenu.focus();
-    addLog("Beralih ke Menu Change Random Amount.", "system", currentNetwork);
+    addLog("Switch to the Change Random Amount Menu.", "system", currentNetwork);
     safeRender();
   } else if (selected === "Clear Transaction Logs") {
     clearTransactionLogs();
@@ -1787,18 +1787,18 @@ sepoliaR2SubMenu.on("select", (item) => {
     walletAddresses.forEach((address) => {
       swapCancelled["Sepolia R2"][address] = true;
     });
-    addLog("Semua transaksi dihentikan di Sepolia R2.", "system", "Sepolia R2");
+    addLog("All transactions stopped on Sepolia R2.", "system", "Sepolia R2");
     sepoliaR2SubMenu.setItems(getSepoliaR2SubMenuItems());
     safeRender();
   } else if (selected === "Back To Main Menu") {
     sepoliaR2SubMenu.hide();
     mainMenu.show();
     mainMenu.focus();
-    addLog("Kembali ke Main Menu.", "system", currentNetwork);
+    addLog("Return to Main Menu.", "system", currentNetwork);
     safeRender();
   } else if (selected === "Refresh") {
     updateWalletData("Sepolia R2");
-    addLog("Memperbarui data wallet untuk Sepolia R2.", "system", "Sepolia R2");
+    addLog("Update wallet data for Sepolia R2.", "system", "Sepolia R2");
   }
 });
 
@@ -1818,22 +1818,22 @@ sepoliaManualSwapSubMenu.on("select", (item) => {
       sepoliaR2SubMenu.show();
       sepoliaR2SubMenu.focus();
     }
-    addLog("Kembali ke Menu Network.", "system", network);
+    addLog("Return to Network Menu.", "system", network);
     safeRender();
     return;
   }
 
   promptBox.setFront();
-  promptBox.input(`Masukkan jumlah untuk ${selected}`, "", async (err, value) => {
+  promptBox.input(`Enter the amount for ${selected}`, "", async (err, value) => {
     promptBox.hide();
     safeRender();
     if (err || !value) {
-      addLog(`${selected}: Input dibatalkan.`, "swap", network);
+      addLog(`${selected}: Input Cancelled.`, "swap", network);
       return;
     }
     const amount = parseFloat(value);
     if (isNaN(amount) || amount <= 0) {
-      addLog(`${selected}: Jumlah harus lebih besar dari 0.`, "swap", network);
+      addLog(`${selected}: The amount must be greater than 0..`, "swap", network);
       return;
     }
 
@@ -1928,16 +1928,16 @@ sepoliaChangeRandomAmountSubMenu.on("select", (item) => {
   }
 
   promptBox.setFront();
-  promptBox.input(`Masukkan rentang untuk ${selected} (format: min,max)`, "", (err, value) => {
+  promptBox.input(`Enter the range for ${selected} (format: min,max)`, "", (err, value) => {
     promptBox.hide();
     safeRender();
     if (err || !value) {
-      addLog(`${selected}: Input dibatalkan.`, "system", currentNetwork);
+      addLog(`${selected}: Input cancelled.`, "system", currentNetwork);
       return;
     }
     const [min, max] = value.split(",").map((v) => parseFloat(v.trim()));
     if (isNaN(min) || isNaN(max) || min < 0 || max < min) {
-      addLog(`${selected}: Rentang tidak valid. Harus dalam format min,max dengan min >= 0 dan max > min.`, "error", currentNetwork);
+      addLog(`${selected}: Invalid range. Must be in the format min,max with min >= 0 and max > min.`, "error", currentNetwork);
       return;
     }
 
@@ -1958,7 +1958,7 @@ sepoliaChangeRandomAmountSubMenu.on("select", (item) => {
       randomAmountRanges[selected].R2USD.max = max;
     }
 
-    addLog(`Rentang untuk ${selected} diubah menjadi min: ${min}, max: ${max}`, "success", currentNetwork);
+    addLog(`Range for ${selected} Changed to min: ${min}, max: ${max}`, "success", currentNetwork);
   });
 });
 
@@ -1972,25 +1972,25 @@ claimFaucetSubMenu.on("select", (item) => {
     stopAutoDailyClaim();
   } else if (selected === "Stop Proses") {
     claimCancelled = true;
-    addLog("Proses claim faucet dihentikan.", "system", currentNetwork);
+    addLog("The faucet claim process has been stopped.", "system", currentNetwork);
     claimFaucetSubMenu.setItems(getClaimFaucetSubMenuItems());
     safeRender();
   } else if (selected === "Clear Transaction Logs") {
     clearTransactionLogs();
   } else if (selected === "Refresh") {
     updateWalletData(currentNetwork);
-    addLog("Memperbarui data wallet.", "system", currentNetwork);
+    addLog("Update wallet data.", "system", currentNetwork);
   } else if (selected === "Back to Main Menu") {
     claimFaucetSubMenu.hide();
     mainMenu.show();
     mainMenu.focus();
-    addLog("Kembali ke Main Menu.", "system", currentNetwork);
+    addLog("Return To Main Menu.", "system", currentNetwork);
     safeRender();
   }
 });
 
 screen.key(["q", "C-c"], () => {
-  addLog("Keluar dari aplikasi.", "system", currentNetwork);
+  addLog("Exit the application.", "system", currentNetwork);
   screen.destroy();
   process.exit(0);
 });
@@ -2000,7 +2000,7 @@ screen.key(["left", "right"], (ch, key) => {
   if (newIndex >= 0 && newIndex < walletAddresses.length) {
     currentWalletIndex = newIndex;
     updateWallet();
-    addLog(`Wallet diubah ke ${getShortAddress(walletAddresses[currentWalletIndex])} (Wallet ${currentWalletIndex + 1})`, "system", currentNetwork);
+    addLog(`Wallet changed to ${getShortAddress(walletAddresses[currentWalletIndex])} (Wallet ${currentWalletIndex + 1})`, "system", currentNetwork);
   }
 });
 
