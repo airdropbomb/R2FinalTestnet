@@ -1416,7 +1416,7 @@ const mainMenu = blessed.list({
   vi: true,
   mouse: true,
   border: { type: "line" },
-  style: { fg: "white", bg: "default", border: { fg: "red" }, selected: { bg:foot: "green", fg: "black" } },
+  style: { fg: "white", bg: "default", border: { fg: "red" }, selected: { bg: "green", fg: "black" } },
   items: getMainMenItems(),
 });
 
