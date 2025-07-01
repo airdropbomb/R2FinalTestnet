@@ -547,12 +547,12 @@ async function swapR2usdToUsdc(amountR2usd, nonce, wallet, provider, config) {
 
   const methodId = "0x3df02124";
   const data = ethers.concat([
-    method indicator,
-    ethers.AbiCoder.defaultAbiCoder().encode(
-      ["int128", "int128", "uint256", "uint256"],
-      [0, 1, amount, minDy]
-    ),
-  ]);
+  methodId,
+  ethers.AbiCoder.defaultAbiCoder().encode(
+    ["int128", "int128", "uint256", "uint256"],
+    [0, 1, amount, minDy]
+  ),
+]);
 
   const tx = await wallet.sendTransaction({
     to: routerContractAddress,
