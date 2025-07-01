@@ -1,0 +1,4 @@
+[
+  { "privateKey": "private_key1", "discordToken": "discord_token1" },
+  { "privateKey": "private_key2", "discordToken": "discord_token2" }
+]
