@@ -538,7 +538,7 @@ async function swapR2usdToUsdc(amountR2usd, nonce, wallet, provider, config) {
   let balance = await r2usdContract.balanceOf(wallet.address);
   balance = BigInt(balance.toString());
 
-  if (balance < amount) throw new Error(`Saldo R2USD tidak cukup: ${ethers.formatUnits(balance, 6)} R2USD`);
+  if (balance < amount) throw new Error(`R2USD balance is insufficient: ${ethers.formatUnits(balance, 6)} R2USD`);
 
   await ensureApproval(config.R2USD_ADDRESS, routerContractAddress, amount, wallet, network);
 
@@ -573,7 +573,7 @@ async function swapR2ToUsdc(amountR2, nonce, wallet, provider, config) {
   let balance = await r2Contract.balanceOf(wallet.address);
   balance = BigInt(balance.toString());
 
-  if (balance < amount) throw new Error(`Saldo R2 tidak cukup: ${ethers.formatUnits(balance, 18)} R2`);
+  if (balance < amount) throw new Error(`R2 balance is insufficient: ${ethers.formatUnits(balance, 18)} R2`);
 
   await ensureApproval(config.R2_ADDRESS, routerContractAddress, amount, wallet, network);
 
@@ -603,7 +603,7 @@ async function swapUsdcToR2(amountUsdc, nonce, wallet, provider, config) {
   let balance = await usdcContract.balanceOf(wallet.address);
   balance = BigInt(balance.toString());
 
-  if (balance < amount) throw new Error(`Saldo USDC tidak cukup: ${ethers.formatUnits(balance, 6)} USDC`);
+  if (balance < amount) throw new Error(`USDC balance is insufficient: ${ethers.formatUnits(balance, 6)} USDC`);
 
   await ensureApproval(config.USDC_ADDRESS, routerContractAddress, amount, wallet, network);
 
@@ -633,7 +633,7 @@ async function swapR2ToR2usd(amountR2, nonce, wallet, provider, config) {
   let balance = await r2Contract.balanceOf(wallet.address);
   balance = BigInt(balance.toString());
 
-  if (balance < amount) throw new Error(`Saldo R2 tidak cukup: ${ethers.formatUnits(balance, 18)} R2`);
+  if (balance < amount) throw new Error(`R2 balance is insufficient: ${ethers.formatUnits(balance, 18)} R2`);
 
   await ensureApproval(config.R2_ADDRESS, routerContractAddress, amount, wallet, network);
 
@@ -663,7 +663,7 @@ async function swapR2usdToR2(amountR2usd, nonce, wallet, provider, config) {
   let balance = await r2usdContract.balanceOf(wallet.address);
   balance = BigInt(balance.toString());
 
-  if (balance < amount) throw new Error(`Saldo R2USD tidak cukup: ${ethers.formatUnits(balance, 6)} R2USD`);
+  if (balance < amount) throw new Error(`R2USD balance is insufficient: ${ethers.formatUnits(balance, 6)} R2USD`);
 
   await ensureApproval(config.R2USD_ADDRESS, routerContractAddress, amount, wallet, network);
 
@@ -698,8 +698,8 @@ async function addLpR2Usdc(amountR2, amountUsdc, nonce, wallet, provider, config
   balanceR2 = BigInt(balanceR2.toString());
   balanceUsdc = BigInt(balanceUsdc.toString());
 
-  if (balanceR2 < amountR2Wei) throw new Error(`Saldo R2 tidak cukup: ${ethers.formatUnits(balanceR2, 18)} R2`);
-  if (balanceUsdc < amountUsdcWei) throw new Error(`Saldo USDC tidak cukup: ${ethers.formatUnits(balanceUsdc, 6)} USDC`);
+  if (balanceR2 < amountR2Wei) throw new Error(`R2 balance is insufficient: ${ethers.formatUnits(balanceR2, 18)} R2`);
+  if (balanceUsdc < amountUsdcWei) throw new Error(`USDC balance is insufficient: ${ethers.formatUnits(balanceUsdc, 6)} USDC`);
 
   await ensureApproval(config.R2_ADDRESS, routerContractAddress, amountR2Wei, wallet, network);
   await ensureApproval(config.USDC_ADDRESS, routerContractAddress, amountUsdcWei, wallet, network);
@@ -738,8 +738,8 @@ async function addLpR2R2usd(amountR2, amountR2usd, nonce, wallet, provider, conf
   balanceR2 = BigInt(balanceR2.toString());
   balanceR2usd = BigInt(balanceR2usd.toString());
 
-  if (balanceR2 < amountR2Wei) throw new Error(`Saldo R2 tidak cukup: ${ethers.formatUnits(balanceR2, 18)} R2`);
-  if (balanceR2usd < amountR2usdWei) throw new Error(`Saldo R2USD tidak cukup: ${ethers.formatUnits(balanceR2usd, 6)} R2USD`);
+  if (balanceR2 < amountR2Wei) throw new Error(`R2 balance is insufficient: ${ethers.formatUnits(balanceR2, 18)} R2`);
+  if (balanceR2usd < amountR2usdWei) throw new Error(`R2USD balance is insufficient: ${ethers.formatUnits(balanceR2usd, 6)} R2USD`);
 
   await ensureApproval(config.R2_ADDRESS, routerContractAddress, amountR2Wei, wallet, network);
   await ensureApproval(config.R2USD_ADDRESS, routerContractAddress, amountR2usdWei, wallet, network);
@@ -772,7 +772,7 @@ async function autoSwapR2usdUsdc(network, wallet) {
 
   if (currentDirection) {
     amount = getRandomNumber(ranges["USDC"].min, ranges["USDC"].max).toFixed(6);
-    addLog(`Trying swap: ${amount} USDC ke R2USD For wallet ${getShortAddress(wallet.address)}`, "swap", network);
+    addLog(`Trying swap: ${amount} USDC To R2USD For wallet ${getShortAddress(wallet.address)}`, "swap", network);
     txPromise = addTransactionToQueue(
       (nonce, _, provider, config) => swapUsdcToR2usd(amount, nonce, wallet, provider, config),
       `Swap ${amount} USDC to R2USD`,
@@ -781,7 +781,7 @@ async function autoSwapR2usdUsdc(network, wallet) {
     );
   } else {
     amount = getRandomNumber(ranges["R2USD"].min, ranges["R2USD"].max).toFixed(6);
-    addLog(`Trying swap: ${amount} R2USD ke USDC For wallet ${getShortAddress(wallet.address)}`, "swap", network);
+    addLog(`Trying swap: ${amount} R2USD To USDC For wallet ${getShortAddress(wallet.address)}`, "swap", network);
     txPromise = addTransactionToQueue(
       (nonce, _, provider, config) => swapR2usdToUsdc(amount, nonce, wallet, provider, config),
       `Swap ${amount} R2USD to USDC`,
@@ -805,7 +805,7 @@ async function autoSwapR2Usdc(network, wallet) {
 
   if (currentDirection) {
     amount = getRandomNumber(ranges["USDC"].min, ranges["USDC"].max).toFixed(6);
-    addLog(`Trying swap: ${amount} USDC ke R2 For wallet ${getShortAddress(wallet.address)}`, "swap", network);
+    addLog(`Trying swap: ${amount} USDC To R2 For wallet ${getShortAddress(wallet.address)}`, "swap", network);
     txPromise = addTransactionToQueue(
       (nonce, _, provider, config) => swapUsdcToR2(amount, nonce, wallet, provider, config),
       `Swap ${amount} USDC to R2`,
@@ -814,7 +814,7 @@ async function autoSwapR2Usdc(network, wallet) {
     );
   } else {
     amount = getRandomNumber(ranges["R2"].min, ranges["R2"].max).toFixed(6);
-    addLog(`Trying swap: ${amount} R2 ke USDC For wallet ${getShortAddress(wallet.address)}`, "swap", network);
+    addLog(`Trying swap: ${amount} R2 To USDC For wallet ${getShortAddress(wallet.address)}`, "swap", network);
     txPromise = addTransactionToQueue(
       (nonce, _, provider, config) => swapR2ToUsdc(amount, nonce, wallet, provider, config),
       `Swap ${amount} R2 to USDC`,
@@ -838,7 +838,7 @@ async function autoSwapR2R2usd(network, wallet) {
 
   if (currentDirection) {
     amount = getRandomNumber(ranges["R2"].min, ranges["R2"].max).toFixed(6);
-    addLog(`Trying swap: ${amount} R2 ke R2USD For wallet ${getShortAddress(wallet.address)}`, "swap", network);
+    addLog(`Trying swap: ${amount} R2 To R2USD For wallet ${getShortAddress(wallet.address)}`, "swap", network);
     txPromise = addTransactionToQueue(
       (nonce, _, provider, config) => swapR2ToR2usd(amount, nonce, wallet, provider, config),
       `Swap ${amount} R2 to R2USD`,
@@ -847,7 +847,7 @@ async function autoSwapR2R2usd(network, wallet) {
     );
   } else {
     amount = getRandomNumber(ranges["R2USD"].min, ranges["R2USD"].max).toFixed(6);
-    addLog(`Trying swap: ${amount} R2USD ke R2 For wallet ${getShortAddress(wallet.address)}`, "swap", network);
+    addLog(`Trying swap: ${amount} R2USD To R2 For wallet ${getShortAddress(wallet.address)}`, "swap", network);
     txPromise = addTransactionToQueue(
       (nonce, _, provider, config) => swapR2usdToR2(amount, nonce, wallet, provider, config),
       `Swap ${amount} R2USD to R2`,
@@ -872,7 +872,7 @@ async function autoStakeR2usdSr2usd(amountR2usd, nonce, wallet, provider, config
   let balance = await r2usdContract.balanceOf(wallet.address);
   balance = BigInt(balance.toString());
 
-  if (balance < amount) throw new Error(`Saldo R2USD tidak cukup: ${ethers.formatUnits(balance, 6)} R2USD`);
+  if (balance < amount) throw new Error(`R2USD balance is insufficient: ${ethers.formatUnits(balance, 6)} R2USD`);
 
   await ensureApproval(config.R2USD_ADDRESS, stakingContractAddress, amount, wallet, network);
 
