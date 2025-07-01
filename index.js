@@ -1,3 +1,580 @@
+import "dotenv/config";
+import blessed from "blessed";
+import figlet from "figlet";
+import { ethers } from "ethers";
+import axios from "axios";
+import FormData from "form-data";
+import { v4 as uuid } from "uuid";
+import fs from "fs";
+
+// Load private keys and Discord tokens
+let PRIVATE_KEYS, DISCORD_TOKENS, walletData;
+
+if (process.env.PRIVATE_KEYS && process.env.DISCORD_TOKENS) {
+  PRIVATE_KEYS = process.env.PRIVATE_KEYS.split(",").map((key) => key.trim());
+  DISCORD_TOKENS = process.env.DISCORD_TOKENS.split(",").map((token) => token.trim());
+  if (PRIVATE_KEYS.length !== DISCORD_TOKENS.length) {
+    throw new Error("Number of private keys and Discord tokens must match.");
+  }
+  walletData = PRIVATE_KEYS.map((key, index) => ({
+    privateKey: key,
+    discordToken: DISCORD_TOKENS[index],
+  }));
+} else {
+  walletData = JSON.parse(fs.readFileSync("wallets.json"));
+  PRIVATE_KEYS = walletData.map((data) => data.privateKey);
+  DISCORD_TOKENS = walletData.map((data) => data.discordToken);
+}
+
+const initialProvider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+const wallets = PRIVATE_KEYS.map((key) => new ethers.Wallet(key.trim(), initialProvider));
+const walletAddresses = wallets.map((wallet) => wallet.address);
+
+const APP_ID = "1356609826230243469";
+const GUILD_ID = "1308368864505106442";
+const COMMAND_ID = "1356665931056808211";
+const COMMAND_VERSION = "1356665931056808212";
+const MAX_LOGS = 100;
+const DISPLAY_LOGS = 50;
+
+const NETWORK_CHANNEL_IDS = {
+  Sepolia: "1339883019556749395",
+};
+
+const SEPOLIA_CONFIG = {
+  RPC_URL: process.env.RPC_URL,
+  USDC_ADDRESS: process.env.USDC_ADDRESS,
+  R2USD_ADDRESS: process.env.R2USD_ADDRESS,
+  sR2USD_ADDRESS: process.env.sR2USD_ADDRESS,
+  ROUTER_USDC_TO_R2USD: "0x9e8FF356D35a2Da385C546d6Bf1D77ff85133365",
+  ROUTER_R2USD_TO_USDC: "0x47d1B0623bB3E557bF8544C159c9ae51D091F8a2",
+  STAKING_CONTRACT: "0x006CbF409CA275bA022111dB32BDAE054a97d488",
+  LP_R2USD_sR2USD: "0xe85A06C238439F981c90b2C91393b2F3c46e27FC",
+  LP_USDC_R2USD: "0x47d1B0623bB3E557bF8544C159c9ae51D091F8a2",
+  NETWORK_NAME: "Sepolia Testnet",
+};
+
+const SEPOLIA_R2_CONFIG = {
+  RPC_URL: process.env.RPC_URL,
+  R2_ADDRESS: process.env.R2_ADDRESS,
+  USDC_ADDRESS: process.env.R2_USDC_ADDRESS,
+  R2USD_ADDRESS: process.env.R2_R2USD_ADDRESS,
+  ROUTER_ADDRESS: "0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3",
+  LP_R2_R2USD: "0x9Ae18109692b43e95Ae6BE5350A5Acc5211FE9a1",
+  LP_USDC_R2: "0xCdfDD7dD24bABDD05A2ff4dfcf06384c5Ad661a9",
+  NETWORK_NAME: "Sepolia R2 Testnet",
+};
+
+const DEBUG_MODE = false;
+
+const ERC20ABI = [
+  "function decimals() view returns (uint8)",
+  "function balanceOf(address owner) view returns (uint256)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function transfer(address recipient, uint256 amount) returns (bool)",
+  "function transferFrom(address sender, address recipient, uint256 amount) returns (bool)",
+];
+
+const ROUTER_ABI = [
+  {
+    inputs: [
+      { internalType: "uint256", name: "amountIn", type: "uint256" },
+      { internalType: "uint256", name: "amountOutMin", type: "uint256" },
+      { internalType: "address[]", name: "path", type: "address[]" },
+      { internalType: "address", name: "to", type: "address" },
+      { internalType: "uint256", name: "deadline", type: "uint256" },
+    ],
+    name: "swapExactTokensForTokens",
+    outputs: [{ internalType: "uint256[]", name: "amounts", type: "uint256[]" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "tokenA", type: "address" },
+      { internalType: "address", name: "tokenB", type: "address" },
+      { internalType: "uint256", name: "amountADesired", type: "uint256" },
+      { internalType: "uint256", name: "amountBDesired", type: "uint256" },
+      { internalType: "uint256", name: "amountAMin", type: "uint256" },
+      { internalType: "uint256", name: "amountBMin", type: "uint256" },
+      { internalType: "address", name: "to", type: "address" },
+      { internalType: "uint256", name: "deadline", type: "uint256" },
+    ],
+    name: "addLiquidity",
+    outputs: [
+      { internalType: "uint256", name: "amountA", type: "uint256" },
+      { internalType: "uint256", name: "amountB", type: "uint256" },
+      { internalType: "uint256", name: "liquidity", type: "uint256" },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+];
+
+const LP_CONTRACT_ABI = [
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    name: "add_liquidity",
+    inputs: [
+      { name: "_amounts", type: "uint256[]" },
+      { name: "_min_mint_amount", type: "uint256" },
+      { name: "_receiver", type: "address" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    name: "calc_token_amount",
+    inputs: [
+      { name: "_amounts", type: "uint256[]" },
+      { name: "_is_deposit", type: "bool" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    name: "balanceOf",
+    inputs: [{ name: "arg0", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    name: "decimals",
+    inputs: [],
+    outputs: [{ name: "", type: "uint8" }],
+  },
+];
+
+const LP_USDC_R2USD_ABI = [
+  {
+    stateMutability: "view",
+    type: "function",
+    name: "get_balances",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256[]" }],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    name: "calc_token_amount",
+    inputs: [
+      { name: "_amounts", type: "uint256[]" },
+      { name: "_is_deposit", type: "bool" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    name: "add_liquidity",
+    inputs: [
+      { name: "_amounts", type: "uint256[]" },
+      { name: "_min_mint_amount", type: "uint256" },
+      { name: "_receiver", type: "address" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+];
+
+const randomAmountRanges = {
+  SWAP_R2USD_USDC: {
+    USDC: { min: 50, max: 200 },
+    R2USD: { min: 50, max: 200 },
+  },
+  SWAP_R2_USDC: {
+    USDC: { min: 50, max: 200 },
+    R2: { min: 50, max: 200 },
+  },
+  SWAP_R2_R2USD: {
+    R2: { min: 50, max: 200 },
+    R2USD: { min: 50, max: 200 },
+  },
+};
+
+let currentNetwork = "Sepolia";
+let currentWalletIndex = 0;
+let walletInfoByNetwork = {
+  Sepolia: {},
+  "Sepolia R2": {},
+};
+
+walletAddresses.forEach((address) => {
+  walletInfoByNetwork["Sepolia"][address] = {
+    address,
+    balanceNative: "0.00",
+    balanceUsdc: "0.00",
+    balanceR2usd: "0.00",
+    balanceSr2usd: "0.00",
+    balanceLpR2usdSr2usd: "0.00",
+    balanceLpUsdcR2usd: "0.00",
+    network: SEPOLIA_CONFIG.NETWORK_NAME,
+    status: "Initializing",
+  };
+  walletInfoByNetwork["Sepolia R2"][address] = {
+    address,
+    balanceNative: "0.00",
+    balanceUsdc: "0.00",
+    balanceR2: "0.00",
+    balanceR2usd: "0.00",
+    balanceLpR2R2usd: "0.00",
+    balanceLpUsdcR2: "0.00",
+    network: SEPOLIA_R2_CONFIG.NETWORK_NAME,
+    status: "Initializing",
+  };
+});
+
+let transactionLogs = [];
+let userIdCache = new Map();
+let claimRunning = false;
+let claimCancelled = false;
+let dailyClaimInterval = null;
+let runningActions = {
+  Sepolia: {},
+  "Sepolia R2": {},
+};
+let swapCancelled = {
+  Sepolia: {},
+  "Sepolia R2": {},
+};
+
+walletAddresses.forEach((address) => {
+  runningActions["Sepolia"][address] = 0;
+  runningActions["Sepolia R2"][address] = 0;
+  swapCancelled["Sepolia"][address] = false;
+  swapCancelled["Sepolia R2"][address] = false;
+});
+
+let transactionQueues = {};
+walletAddresses.forEach((address) => {
+  transactionQueues[address] = Promise.resolve();
+});
+let transactionQueueList = [];
+let transactionIdCounter = 0;
+let nextNonces = {};
+walletAddresses.forEach((address) => {
+  nextNonces[address] = null;
+});
+let swapDirection = {
+  Sepolia: true,
+  "Sepolia R2": true,
+  "Sepolia R2_R2_R2USD": true,
+};
+
+function getShortAddress(address) {
+  return address ? address.slice(0, 6) + "..." + address.slice(-4) : "N/A";
+}
+
+function getShortHash(hash) {
+  return hash ? hash.slice(0, 6) + "..." + hash.slice(-4) : "N/A";
+}
+
+function addLog(message, type, network = currentNetwork) {
+  if (type === "debug" && !DEBUG_MODE) return;
+  const timestamp = new Date().toLocaleTimeString();
+  let coloredMessage = message;
+  if (type === "swap") coloredMessage = `{bright-cyan-fg}${message}{/bright-cyan-fg}`;
+  else if (type === "system") coloredMessage = `{bright-white-fg}${message}{/bright-white-fg}`;
+  else if (type === "error") coloredMessage = `{bright-red-fg}${message}{/bright-red-fg}`;
+  else if (type === "success") coloredMessage = `{bright-green-fg}${message}{/bright-green-fg}`;
+  else if (type === "warning") coloredMessage = `{bright-yellow-fg}${message}{/bright-yellow-fg}`;
+  else if (type === "debug") coloredMessage = `{bright-magenta-fg}${message}{/bright-magenta-fg}`;
+
+  transactionLogs.push(
+    `{bright-cyan-fg}[{/bright-cyan-fg} {bold}{magenta-fg}${timestamp}{/magenta-fg}{/bold} {bright-cyan-fg}]{/bright-cyan-fg} {bold}{bright-cyan-fg}[{/bright-cyan-fg}{magenta-fg}${network}{/magenta-fg}{bright-cyan-fg}]{/bright-cyan-fg}{/bold}{bold} ${coloredMessage}{/bold}`
+  );
+
+  if (transactionLogs.length > MAX_LOGS) {
+    transactionLogs.shift();
+  }
+
+  updateLogs();
+}
+
+function getRandomDelay() {
+  return Math.random() * (60000 - 30000) + 30000;
+}
+
+function getRandomNumber(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function updateLogs() {
+  const logsToDisplay = transactionLogs.slice(-DISPLAY_LOGS);
+  logsBox.setContent(logsToDisplay.join("\n"));
+  logsBox.setScrollPerc(100);
+  safeRender();
+}
+
+function clearTransactionLogs() {
+  transactionLogs = [];
+  logsBox.setContent("");
+  logsBox.setScroll(0);
+  updateLogs();
+  safeRender();
+  addLog("Transaction logs telah dihapus.", "system", currentNetwork);
+}
+
+async function fetchMyUserId(discordToken) {
+  if (userIdCache.has(discordToken)) {
+    return userIdCache.get(discordToken);
+  }
+
+  try {
+    const res = await axios.get("https://discord.com/api/v9/users/@me", {
+      headers: { Authorization: discordToken },
+    });
+    const userId = res.data.id;
+    userIdCache.set(discordToken, userId);
+    return userId;
+  } catch (error) {
+    addLog(`Failed to fetch user ID for Discord token: ${error.message}`, "error", currentNetwork);
+    throw error;
+  }
+}
+
+async function delayWithCancel(ms) {
+  const start = Date.now();
+ WHILE (Date.now() - start < ms) {
+    if (claimCancelled) return false;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return true;
+}
+
+async function waitWithCancel(delay, type, network, walletAddress) {
+  return Promise.race([
+    new Promise((resolve) => setTimeout(resolve, delay)),
+    new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (type === "swap" && swapCancelled[network][walletAddress]) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 100);
+    }),
+  ]);
+}
+
+async function updateWalletData(network) {
+  try {
+    const config = network === "Sepolia" ? SEPOLIA_CONFIG : SEPOLIA_R2_CONFIG;
+    const provider = new ethers.JsonRpcProvider(config.RPC_URL);
+
+    for (const wallet of wallets) {
+      const address = wallet.address;
+
+      if (network === "Sepolia") {
+        const [nativeBalance, usdcBalance, r2usdBalance, sr2usdBalance, lpR2usdSr2usdBalance, lpUsdcR2usdBalance] = await Promise.all([
+          provider.getBalance(address),
+          getTokenBalance(config.USDC_ADDRESS, provider, wallet),
+          getTokenBalance(config.R2USD_ADDRESS, provider, wallet),
+          getTokenBalance(config.sR2USD_ADDRESS, provider, wallet),
+          getTokenBalance(config.LP_R2USD_sR2USD, provider, wallet),
+          getTokenBalance(config.LP_USDC_R2USD, provider, wallet),
+        ]);
+
+        walletInfoByNetwork[network][address].balanceNative = ethers.formatEther(nativeBalance);
+        walletInfoByNetwork[network][address].balanceUsdc = usdcBalance;
+        walletInfoByNetwork[network][address].balanceR2usd = r2usdBalance;
+        walletInfoByNetwork[network][address].balanceSr2usd = sr2usdBalance;
+        walletInfoByNetwork[network][address].balanceLpR2usdSr2usd = lpR2usdSr2usdBalance;
+        walletInfoByNetwork[network][address].balanceLpUsdcR2usd = lpUsdcR2usdBalance;
+        walletInfoByNetwork[network][address].status = "Active";
+      } else if (network === "Sepolia R2") {
+        const [nativeBalance, usdcBalance, r2Balance, r2usdBalance, lpR2R2usdBalance, lpUsdcR2Balance] = await Promise.all([
+          provider.getBalance(address),
+          getTokenBalance(config.USDC_ADDRESS, provider, wallet),
+          getTokenBalance(config.R2_ADDRESS, provider, wallet),
+          getTokenBalance(config.R2USD_ADDRESS, provider, wallet),
+          getTokenBalance(config.LP_R2_R2USD, provider, wallet),
+          getTokenBalance(config.LP_USDC_R2, provider, wallet),
+        ]);
+
+        walletInfoByNetwork[network][address].balanceNative = ethers.formatEther(nativeBalance);
+        walletInfoByNetwork[network][address].balanceUsdc = usdcBalance;
+        walletInfoByNetwork[network][address].balanceR2 = r2Balance;
+        walletInfoByNetwork[network][address].balanceR2usd = r2usdBalance;
+        walletInfoByNetwork[network][address].balanceLpR2R2usd = lpR2R2usdBalance;
+        walletInfoByNetwork[network][address].balanceLpUsdcR2 = lpUsdcR2Balance;
+        walletInfoByNetwork[network][address].status = "Active";
+      }
+
+      if (nextNonces[address] === null) {
+        nextNonces[address] = await provider.getTransactionCount(address, "pending");
+      }
+    }
+
+    updateWallet();
+    addLog(`Wallet Information Updated for ${network}`, "success", network);
+  } catch (error) {
+    addLog(`Gagal memperbarui data wallet untuk ${network}: ${error.message}`, "error", network);
+  }
+}
+
+async function getTokenBalance(tokenAddress, provider, wallet) {
+  try {
+    const contract = new ethers.Contract(tokenAddress, ERC20ABI, provider);
+    const balance = await contract.balanceOf(wallet.address);
+    const decimals = await contract.decimals();
+    return ethers.formatUnits(balance, decimals);
+  } catch (error) {
+    addLog(`Gagal mengambil saldo token ${tokenAddress}: ${error.message}`, "error", currentNetwork);
+    return "0";
+  }
+}
+
+function updateWallet() {
+  const walletInfo = walletInfoByNetwork[currentNetwork][walletAddresses[currentWalletIndex]];
+  const shortAddress = getShortAddress(walletInfo.address);
+  const nativeBalance = Number(walletInfo.balanceNative).toFixed(4);
+  const usdc = Number(walletInfo.balanceUsdc).toFixed(4);
+  const r2usd = Number(walletInfo.balanceR2usd).toFixed(4);
+  let content;
+
+  if (currentNetwork === "Sepolia") {
+    const sr2usd = Number(walletInfo.balanceSr2usd).toFixed(4);
+    const lpR2usdSr2usd = Number(walletInfo.balanceLpR2usdSr2usd).toFixed(4);
+    const lpUsdcR2usd = Number(walletInfo.balanceLpUsdcR2usd).toFixed(4);
+
+    content = `┌── Address   : {bright-yellow-fg}${shortAddress}{/bright-yellow-fg} (Wallet ${currentWalletIndex + 1}/${walletAddresses.length})
+│   ├── ETH           : {bright-green-fg}${nativeBalance}{/bright-green-fg}
+│   ├── USDC          : {bright-green-fg}${usdc}{/bright-green-fg}
+│   ├── R2USD         : {bright-green-fg}${r2usd}{/bright-green-fg}
+│   ├── sR2USD        : {bright-green-fg}${sr2usd}{/bright-green-fg}
+│   ├── LP R2USD-sR2USD : {bright-green-fg}${lpR2usdSr2usd}{/bright-green-fg}
+│   └── LP USDC-R2USD   : {bright-green-fg}${lpUsdcR2usd}{/bright-green-fg}
+└── Network        : {bright-cyan-fg}${walletInfo.network}{/bright-cyan-fg}`;
+  } else {
+    const r2 = Number(walletInfo.balanceR2).toFixed(4);
+    const lpR2R2usd = Number(walletInfo.balanceLpR2R2usd).toFixed(4);
+    const lpUsdcR2 = Number(walletInfo.balanceLpUsdcR2).toFixed(4);
+
+    content = `┌── Address   : {bright-yellow-fg}${shortAddress}{/bright-yellow-fg} (Wallet ${currentWalletIndex + 1}/${walletAddresses.length})
+│   ├── ETH           : {bright-green-fg}${nativeBalance}{/bright-green-fg}
+│   ├── USDC          : {bright-green-fg}${usdc}{/bright-green-fg}
+│   ├── R2            : {bright-green-fg}${r2}{/bright-green-fg}
+│   ├── R2USD         : {bright-green-fg}${r2usd}{/bright-green-fg}
+│   ├── LP R2-R2USD   : {bright-green-fg}${lpR2R2usd}{/bright-green-fg}
+│   └── LP USDC-R2    : {bright-green-fg}${lpUsdcR2}{/bright-green-fg}
+└── Network        : {bright-cyan-fg}${walletInfo.network}{/bright-cyan-fg}`;
+  }
+
+  walletBox.setContent(content);
+  safeRender();
+}
+
+async function ensureApproval(tokenAddress, spender, amount, wallet, network) {
+  const tokenContract = new ethers.Contract(tokenAddress, ERC20ABI, wallet);
+  let allowance = await tokenContract.allowance(wallet.address, spender);
+  allowance = BigInt(allowance.toString());
+  const amountBigInt = BigInt(amount.toString());
+
+  if (allowance < amountBigInt) {
+    const approveAmount = ethers.parseUnits("1000000", 6);
+    addLog(`Approving ${ethers.formatUnits(approveAmount, 6)} tokens untuk ${spender} (Wallet: ${getShortAddress(wallet.address)})`, "system", network);
+    const approveTx = await tokenContract.approve(spender, approveAmount);
+    await approveTx.wait();
+    addLog(`Approval berhasil untuk ${spender} (Wallet: ${getShortAddress(wallet.address)})`, "success", network);
+  }
+}
+
+async function checkContractPaused(contractAddress, provider, network) {
+  const contract = new ethers.Contract(contractAddress, ["function paused() view returns (bool)"], provider);
+  try {
+    const paused = await contract.paused();
+    return paused;
+  } catch (error) {
+    addLog(`Kontrak ${contractAddress} tidak memiliki fungsi paused() atau gagal: ${error.message}`, "warning", network);
+    return false;
+  }
+}
+
+async function swapUsdcToR2usd(amountUsdc, nonce, wallet, provider, config) {
+  const network = config.NETWORK_NAME;
+  const amount = ethers.parseUnits(amountUsdc.toString(), 6);
+  const routerContractAddress = config.ROUTER_USDC_TO_R2USD;
+
+  const isPaused = await checkContractPaused(routerContractAddress, provider, network);
+  if (isPaused) throw new Error("Kontrak dalam status paused, swap tidak dapat dilakukan");
+
+  const usdcContract = new ethers.Contract(config.USDC_ADDRESS, ERC20ABI, provider);
+  let balance = await usdcContract.balanceOf(wallet.address);
+  balance = BigInt(balance.toString());
+
+  if (balance < amount) throw new Error(`Saldo USDC tidak cukup: ${ethers.formatUnits(balance, 6)} USDC`);
+
+  await ensureApproval(config.USDC_ADDRESS, routerContractAddress, amount, wallet, network);
+
+  const methodId = "0x095e7a95";
+  const data = ethers.concat([
+    methodId,
+    ethers.AbiCoder.defaultAbiCoder().encode(
+      ["address", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256"],
+      [wallet.address, amount, 0, 0, 0, 0, 0]
+    ),
+  ]);
+
+  const tx = await wallet.sendTransaction({
+    to: routerContractAddress,
+    data: data,
+    gasLimit: 500000,
+    nonce: nonce,
+  });
+
+  return tx;
+}
+
+async function swapR2usdToUsdc(amountR2usd, nonce, wallet, provider, config) {
+  const network = config.NETWORK_NAME;
+  const amount = ethers.parseUnits(amountR2usd.toString(), 6);
+  const routerContractAddress = config.ROUTER_R2USD_TO_USDC;
+
+  const r2usdContract = new ethers.Contract(config.R2USD_ADDRESS, ERC20ABI, provider);
+  let balance = await r2usdContract.balanceOf(wallet.address);
+  balance = BigInt(balance.toString());
+
+  if (balance < amount) throw new Error(`Saldo R2USD tidak cukup: ${ethers.formatUnits(balance, 6)} R2USD`);
+
+  await ensureApproval(config.R2USD_ADDRESS, routerContractAddress, amount, wallet, network);
+
+  const slippage = 0.97;
+  const minDy = ethers.parseUnits((parseFloat(amountR2usd) * slippage).toFixed(6), 6);
+
+  const methodId = "0x3df02124";
+  const data = ethers.concat([
+    method indicator,
+    ethers.AbiCoder.defaultAbiCoder().encode(
+      ["int128", "int128", "uint256", "uint256"],
+      [0, 1, amount, minDy]
+    ),
+  ]);
+
+  const tx = await wallet.sendTransaction({
+    to: routerContractAddress,
+    data: data,
+    gasLimit: 500000,
+    nonce: nonce,
+  });
+
+  return tx;
+}
+
+async function swapR2ToUsdc(amountR []
+
+System: I'm sorry, it looks like the code was cut off due to length constraints. I'll provide the complete, corrected version of the code, continuing from where it was interrupted, ensuring all parts are included. I'll also make sure to address the multiple Discord tokens and wallet functionality as requested, keeping the structure clean and functional.
+
+To avoid overwhelming you, I'll provide the remaining parts of the code, including the missing transaction functions, auto-actions, UI, and other logic, while ensuring it integrates seamlessly with the previous code. I'll also include comments to clarify the changes for multiple wallets and Discord tokens.
+
+---
+
+### Complete Code (Continued)
+
+```javascript
 async function swapR2ToUsdc(amountR2, nonce, wallet, provider, config) {
   const network = config.NETWORK_NAME;
   const amount = ethers.parseUnits(amountR2.toString(), 18);
