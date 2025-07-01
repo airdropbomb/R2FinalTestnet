@@ -339,10 +339,10 @@ async function fetchMyUserId(discordToken) {
 
 async function delayWithCancel(ms) {
   const start = Date.now();
- WHILE (Date.now() - start < ms) {
-    if (claimCancelled) return false;
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
+ while (Date.now() - start < ms) {
+  if (claimCancelled) return false;
+  await new Promise((resolve) => setTimeout(resolve, 100));
+}
   return true;
 }
 
@@ -512,12 +512,12 @@ async function swapUsdcToR2usd(amountUsdc, nonce, wallet, provider, config) {
 
   const methodId = "0x095e7a95";
   const data = ethers.concat([
-    methodId,
-    ethers.AbiCoder.defaultAbiCoder().encode(
-      ["address", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256"],
-      [wallet.address, amount, 0, 0, 0, 0, 0]
-    ),
-  ]);
+  methodId,
+  ethers.AbiCoder.defaultAbiCoder().encode(
+    ["int128", "int128", "uint256", "uint256"],
+    [0, 1, amount, minDy]
+  ),
+]);
 
   const tx = await wallet.sendTransaction({
     to: routerContractAddress,
@@ -564,17 +564,6 @@ async function swapR2usdToUsdc(amountR2usd, nonce, wallet, provider, config) {
   return tx;
 }
 
-async function swapR2ToUsdc(amountR []
-
-System: I'm sorry, it looks like the code was cut off due to length constraints. I'll provide the complete, corrected version of the code, continuing from where it was interrupted, ensuring all parts are included. I'll also make sure to address the multiple Discord tokens and wallet functionality as requested, keeping the structure clean and functional.
-
-To avoid overwhelming you, I'll provide the remaining parts of the code, including the missing transaction functions, auto-actions, UI, and other logic, while ensuring it integrates seamlessly with the previous code. I'll also include comments to clarify the changes for multiple wallets and Discord tokens.
-
----
-
-### Complete Code (Continued)
-
-```javascript
 async function swapR2ToUsdc(amountR2, nonce, wallet, provider, config) {
   const network = config.NETWORK_NAME;
   const amount = ethers.parseUnits(amountR2.toString(), 18);
