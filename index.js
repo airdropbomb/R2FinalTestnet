@@ -1098,7 +1098,7 @@ async function addTransactionToQueue(transactionFunction, description = "Transat
     status: "queued",
     wallet: wallet.address,
   });
-  addLog(`Transaksi [${transactionId}] Added to queue: ${description} (Wallet: ${getShortAddress(wallet.address)})`, "system", network);
+  addLog(`Transation [${transactionId}] Added to queue: ${description} (Wallet: ${getShortAddress(wallet.address)})`, "system", network);
   updateQueueDisplay();
 
   transactionQueues[wallet.address] = transactionQueues[wallet.address].then(async () => {
@@ -1124,7 +1124,7 @@ async function addTransactionToQueue(transactionFunction, description = "Transat
       return { receipt, txHash, tx };
     } catch (error) {
       updateTransactionStatus(transactionId, "error");
-      addLog(`Transaksi [${transactionId}] gagal: ${error.message} (Wallet: ${getShortAddress(wallet.address)})`, "error", network);
+      addLog(`Transation [${transactionId}] Failed: ${error.message} (Wallet: ${getShortAddress(wallet.address)})`, "error", network);
       nextNonces[wallet.address] = null;
       return null;
     } finally {
